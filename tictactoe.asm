@@ -151,40 +151,36 @@ GETADDRESS	ST R7, SAVER7			;SAVE
 COMPLETEGA	LD R7, SAVER7
 			RET	
 			
-
+GAMEMEMORY	ST R7, SAVER7			;
+			
+			LD R7, SAVER7			;
+			RET						;
 
 DRAWB		ST R7, SAVER7			;SAVE
 			LD R1, TURN				;Turn bool
-			LD R4, TEMPADDRESS		;LOAD the address saved for tictactoe
-			
-			BRp XDRAW				;
-			BRz ODRAW				;
-XDRAW		LD R2, IMAGEX			;
-			ST R2, CURRIMAGE		;
-			LD R0, IMAGEX			;
+			BRp XDRAW				;BOOL
+			BRz ODRAW				;BOOL
+XDRAW		LD R2, IMAGEX			;LOAD imageX
+			ST R2, CURRIMAGE		;Store image into temp data
 			BRnzp DRAWIMAGE			;
-ODRAW		LD R2, IMAGEO			;
-			ST R2, CURRIMAGE		;
-			LD R0, IMAGEO			;
+ODRAW		LD R2, IMAGEO			;Load imageO
+			ST R2, CURRIMAGE		;Store image into temp data
 			BRnzp DRAWIMAGE			;
 			
-DRAWIMAGE	ADD R1, R3, #0			;
-			LD R0, CURRIMAGE		;
-			LD R2, STRIDE			;stride for image rows
-			AND R6, R6, #0			;
-			ADD R6, R6, #15			;
-			ADD R6, R6, #5			;20 rows
-DROWS    	AND R5, R5, #0			;
-			ADD R5, R5, #15			;
-			ADD R5, R5, #5			;20 cols
-DCOLS    	LDR R4, R0, #0			;
-			STR R4, R1, #0			;
-			ADD R0, R0, #1			;
+DRAWIMAGE	LD R1, TEMPADDRESS		;Load beginning of program
+			LD R2, CURRIMAGE		;The current image
+			LD R3, BOXCOUNTER		;20 pixels
+			LD R4, STRIDE			;128 stride
+			ADD R5, R5, R4			;This is the row counter
+DROWS    	ADD R6, R3, #0			;This is the col counter
+DCOLS    	LDR R0, R2, #0			;
+			STR R0, R1, #0			;
 			ADD R1, R1, #1			;
-			ADD R5, R5, #-1			;
-			BRp DCOLS				;
-			ADD R1, R1, R2			;
+			ADD R2, R2, #1			;
 			ADD R6, R6, #-1			;
+			BRp DCOLS				;
+			ADD R1, R1, R4			;Add Stride
+			ADD R5, R5, #-1			;decrement counter
 			BRp DROWS				;
 			LD R7, SAVER7			;
 			RET						;
@@ -239,6 +235,7 @@ NEGq		.FILL xFF8F 			;negative q
 ASCII0		.FILL x0030				;ASCII 0
 ASCII8		.FILL x0038				;ASCII 9
 STRIDE		.FILL #128			   ;Convert to HEX later
+BOXCOUNTER	.FILL #20				;Counter for drawing the box
 
 ADDRESSTABLE						;This is the address table for the code
 	.FILL xC285						;Top Left
