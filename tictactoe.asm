@@ -90,14 +90,17 @@ TOGGLE		LD  R2, TURNBOOL		;Load the bool
 RETURNT		LD  R7, SAVER7			;
 			RET						;RETURN			
 GETMOV		ST R7, SAVER7			;SAVE
+			ST R1, SAVER1			;SAVE R1 Value
+			ST R2, SAVER2			;Save R2 Value
 			GETC					;Input in R0
 			OUT						;ECHO
 			;If q is chosen, branch to qSEL	
 			LD R1, NEGq				;load negative q
 			ADD R2, R0, R1			;Compare
+			BRnp NUMTEST			;Move to next tests
+			ADD R0, R0, #9			;
 			BRz qSEL				;end the program branch
-			;test for numbers
-			LD R1, ASCII8			;Loads x38
+NUMTEST		LD R1, ASCII8			;Loads x38
 			NOT R1, R1				;~R1
 			ADD R1, R1, #1			;-R1
 			ADD R2, R0, R1			;Compare
@@ -114,7 +117,9 @@ GETMOV		ST R7, SAVER7			;SAVE
 ILLEGAL		AND R0, R0, #0			;mask
 			ADD R0, R0, #-1			;Add value into R0
 			ST R0, SAVER0			;Store R0
-COMPLETEGM	LD R7, SAVER7			;
+COMPLETEGM	LD R7, SAVER7			;Load R7
+			LD R1, SAVER1			;Load R1
+			LD R2, SAVER2			;Load R2
 			RET						;Return to funtion	
 GETADDRESS	ST R7, SAVER7			;SAVE
 			LD R0, SAVER0			;Load R0
@@ -175,12 +180,10 @@ LOOPCLEAR1	STR R1, R2, #0			;clear pixel
 			RET						;return
 qSEL		LEA R0, PROMPTQUIT		;loads the quit message
 			PUTS					;print message "thanks for playing"
-			AND R0, R0, #0			;Mask
-			ADD R0, R0, #9			;R0=#9
 			HALT					;halt program			
 			;DATA
 CURRCOLORW	.FILL x7FFF				;White pixel
-CORDROW		.FILL xCF40				;Start location for Rows
+CORDROW		.FILL xCF00				;Start location for Rows
 CORDCOL		.FILL xC01E				;Start Location for Cols
 PIXELCOUNT  .FILL x005A				;90 pixels in a row or column
 TURNCOUNT	.FILL #9				;Turn Counter
@@ -194,6 +197,7 @@ CURRIMAGE	.FILL xA000				;Tempdata of image
 VRAMBEGIN	.FILL xC000				;Start address of image
 VRAMEND		.FILL xFDFF				;End address of image
 SAVER0		.BLKW 1					;Save R0 data after GETMOV
+SAVER1		.BLKW 1					;SAVE R1 for GETMOV
 SAVER7		.BLKW 1					;SAVE R7 address
 NEGq		.FILL xFF8F 			;negative q
 ASCII0		.FILL x0030				;ASCII 0
