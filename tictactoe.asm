@@ -25,14 +25,14 @@ TICTACTOE	JSR TURN				;Determine the turn, Starts on O; GOOD1
 			
 			
 			;Horizontal line
-DRAWH		ST R7, SAVER7			;
-			LD R0, CURRCOLOR1		;
-			LD R1, CORDROW			;
-			LD R3, PIXELCOUNT		;
-			LD R4, ROW				;
+DRAWH		ST R7, SAVER7			;R7 store address
+			LD R0, CURRCOLORW		;R0 white color
+			LD R1, CORDROW			;R1 is current cord
+			LD R3, PIXELCOUNT		;90 pixel count
+			LD R4, STRIDE			;128 stride
 			AND R5, R5, #0			;
 			ADD R5, R5, #1			;Counter for two rows
-		
+
 LOOP1		STR R0, R1, #0			;write pixel
 			ADD R1, R1, #1			;increment to next pixel
 			ADD R3, R3, #-1			;decrement counter
@@ -40,25 +40,23 @@ LOOP1		STR R0, R1, #0			;write pixel
 			
 			ADD R5, R5, #-1			;Decrement counter newrow
 			BRn RETURNROW			;Return the program
-			ADD R3, R3, #15			;counter #30
-			ADD R3, R3, #15			;
+			ADD R5, R5, #15			;R5 counter #30
+			ADD R5, R5, #15			;
 			
 NEWROW		ADD R1, R1, R4			;Add #128 to row
-			ADD R3, R3, #-1			;decrement counter
+			ADD R5, R5, #-1			;decrement counter
 			BRp NEWROW				;LOOP
-			
-			ADD R3, R3, #15			;counter #30
-			ADD R3, R3, #15			;
 			BRnzp LOOP1				;create new row
-RETURNROW	RET						;
+RETURNROW	LD R7, SAVER7			;
+			RET						;
 
 
 			;Vertical line
 DRAWV		ST R7, SAVER7			;
-			LD R0, CURRCOLOR2		;
+			LD R0, CURRCOLORW		;
 			LD R1, CORDCOL			;
 			LD R3, PIXELCOUNT		;
-			LD R4, ROW				;
+			LD R4, STRIDE			;
 			AND R5, R5, #0			;
 			ADD R5, R5, #1			;Counter for two rows
 			
@@ -81,9 +79,10 @@ NEWCOL		ADD R1, R1, R4 			;return to row origin
 			
 			ADD R3, R3, #15			;counter #30
 			ADD R3, R3, #15			;
-			LD R4, ROW				;R4=ROW
+			LD R4, STRIDE			;R4=ROW
 			BRnzp LOOP2				;
-RETURNCOL	RET						;RETURN	
+RETURNCOL	LD R7, SAVER7			;
+			RET						;RETURN	
 
 TURN		ST R7, SAVER7			;SAVE
 			LD R6, TURNCOUNT		;Load amount of turns
@@ -96,18 +95,18 @@ TURN		ST R7, SAVER7			;SAVE
 			BRz XTURN				;Proceed to X turn
 			LEA R0, PROMPTO			;Load prompt
 			PUTS					;Display
-			BRnzp TOGGLE			;
+			BRnzp TOGGLE			;toggle
 			
 XTURN		LEA R0, PROMPTX			;Load prompt			
 			PUTS					;Display Turn
 			
-TOGGLE		LD  R6, TURN			;
-			ADD R2, R2, #1			;
-			AND R2, R2, #1			; toggle 0<->1
-			ST  R2, TURN			; <-- state persisted in memory
-			LD  R7, SAVER7
-			
-RETURNT		RET						;RETURN			
+TOGGLE		LD  R2, TURNBOOL		;Load the bool
+			ADD R2, R2, #1			;0 if even=2, 0 if odd=1
+			AND R2, R2, #1			;toggle
+			ST  R2, TURNBOOL		;store the bool
+
+RETURNT		LD  R7, SAVER7			;
+			RET						;RETURN			
 			
 			;Create an input for the program
 			;THIS ONLY GETS THE R0 VALUE FOR THE INPUT
@@ -131,27 +130,32 @@ GETMOV		ST R7, SAVER7			;SAVE
 			BRn ILLEGAL 			;Return if less than 0
 			AND R0, R0, #0			;mask
 			ADD R0, R0, R2			;Add value into R0
+			ST R0, SAVER0			;Store R0
 			BRnzp COMPLETEGM		;RETURN
 			
 ILLEGAL		AND R0, R0, #0			;mask
 			ADD R0, R0, #-1			;Add value into R0
-COMPLETEGM	RET						;Return to funtion
+			ST R0, SAVER0			;Store R0
+
+COMPLETEGM	LD R7, SAVER7			;
+			RET						;Return to funtion
 			
 			
 GETADDRESS	ST R7, SAVER7			;SAVE
-			LDR R0, R0, #0			;Load R0 for Branch
+			LD R0, SAVER0			;Load R0
 			BRn	COMPLETEGA			;RETURN if R0=-1
 			LD R1, ADDRESSTABLE		;R1=ADDRESSTABLE
 			ADD R3, R0, #0			;temp data for correct address
 			ADD R4, R1, R3			;Find te correct address in the table
 			ST R4, TEMPADDRESS		;Store address for DRAW B
-COMPLETEGA	RET	
+COMPLETEGA	LD R7, SAVER7
+			RET	
 			
 
 
-DRAWB		ST R7, SAVERR7			;SAVE
+DRAWB		ST R7, SAVER7			;SAVE
+			LD R1, TURN				;Turn bool
 			LD R4, TEMPADDRESS		;LOAD the address saved for tictactoe
-			LD R1, TURN				;
 			
 			BRp XDRAW				;
 			BRz ODRAW				;
@@ -165,7 +169,7 @@ ODRAW		LD R2, IMAGEO			;
 			BRnzp DRAWIMAGE			;
 			
 DRAWIMAGE	ADD R1, R3, #0			;
-			LD R0, CURIMAGE			;
+			LD R0, CURRIMAGE		;
 			LD R2, STRIDE			;stride for image rows
 			AND R6, R6, #0			;
 			ADD R6, R6, #15			;
@@ -201,58 +205,62 @@ LOOPCLEAR1	STR R1, R2, #0			;clear pixel
 			BRnz LOOPCLEAR1			;LOOP CLEAR
 			RET						;return
 			
-qSEL		LEA R0, PROMPTQuit		;loads the quit message
+qSEL		LEA R0, PROMPTQUIT		;loads the quit message
 			PUTS					;print message "thanks for playing"
 			AND R0, R0, #0			;Mask
 			ADD R0, R0, #9			;R0=#9
 			HALT					;halt program			
 			
 			;DATA
-PROMPTX		.STRINGZ "O move: "		;O move
-PROMPTO		.STRINGZ "X move: "		;X move
+CURRCOLORW	.FILL x7FFF				;
 
-TURNCOUNT	.FILL #8				;Turn Counter
-TURN		.FILL x0000				;Toggle between 0 and 1, X is 0, O is 1
-
-CURRCOLOR1  .FILL x03E0				;
-CURRCOLOR2  .FILL x001F				;
 CORDROW		.FILL xCF40				;Start location for Rows
 CORDCOL		.FILL xC01E				;Start Location for Cols
-PIXELCOUNT  .FILL #30				;30 pixels in a row or column
+PIXELCOUNT  .FILL x005A				;90 pixels in a row or column
 COORD2		.FILL xD030				;
 
-IMAGEX		.FILL xA000				;
-IMAGEO		.FILL xA200				;
-CURRIMAGE	.FILL xA000				;Stores the current image for drawing
+TURNCOUNT	.FILL #8				;Turn Counter
+TURNBOOL	.FILL x0000				;Toggle between 0 and 1, X is 0, O is 1
 
-VRAMBEGIN	.FILL xC000				;
-VRAMEND		.FILL xFDFF				;
+PROMPTX		.STRINGZ "O move: "		;O move
+PROMPTO		.STRINGZ "X move: "		;X move
+PROMPTQUIT	.STRINGZ "QUIT"			;Quit
 
-SAVER0		.BLKW 1					;
-SAVER7		.BLKW 1					;
-NEGq		.FILL xFF8F 			;
-ASCII0		.FILL x0030				;
-ASCII9		.FILL x0038				;
-ROW			.FILL #128				;
+IMAGEX		.FILL xA000				;Address of X image
+IMAGEO		.FILL xA200				;Address of O image
+CURRIMAGE	.FILL xA000				;Tempdata of image
+
+VRAMBEGIN	.FILL xC000				;Start address of image
+VRAMEND		.FILL xFDFF				;End address of image
+
+SAVER0		.BLKW 1					;Save R0 data after GETMOV
+SAVER7		.BLKW 1					;SAVE R7 address
+NEGq		.FILL xFF8F 			;negative q
+ASCII0		.FILL x0030				;ASCII 0
+ASCII8		.FILL x0038				;ASCII 9
+STRIDE		.FILL #128			   ;Convert to HEX later
 
 ADDRESSTABLE						;This is the address table for the code
-	.FILL xC285
-	.FILL xC2A3
-	.FILL xC2C1
-	.FILL xD185
-	.FILL xD1A3
-	.FILL xD1C1
-	.FILL xE085
-	.FILL xE0A3
-	.FILL xE0C1
+	.FILL xC285						;Top Left
+	.FILL xC2A3						;Top Center
+	.FILL xC2C1						;Top Right
+	.FILL xD185						;Center Left
+	.FILL xD1A3						;Center
+	.FILL xD1C1						;Center Right
+	.FILL xE085						;Bottom Left
+	.FILL xE0A3						;Bottom Center
+	.FILL xE0C1						;Bottom Right
 
-CELL0		.FILL x4010				;
-CELL1		.FILL x4011				;
-CELL2		.FILL x4012				;
-CELL3		.FILL x4013				;
-CELL4		.FILL x4014				;
-CELL5		.FILL x4015				;
-CELL6		.FILL x4016				;
-CELL7		.FILL x4017				;
-CELL8		.FILL x4018				;
+TEMPADDRESS	.FILL x0000				;Temp data for address
+
+CELLTABLE							;This is the address table for the cells, Use LDI and STI
+	.FILL x4010						;
+	.FILL x4011						;
+	.FILL x4012						;
+	.FILL x4013						;
+	.FILL x4014						;
+	.FILL x4015						;
+	.FILL x4016						;
+	.FILL x4017						;
+	.FILL x4018						;
 			.END
