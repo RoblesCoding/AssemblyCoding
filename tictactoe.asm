@@ -3,28 +3,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 			.ORIG x3000
-			
 			JSR CLEARSCREEN			;Clear the screen to black; GOOD1
 			JSR DRAWH				;Draw the rows for tictactoe; GOOD1
 			JSR DRAWV				;Draw the columns for tictactoe; GOOD1
-			
 TICTACTOE	JSR TURN				;Determine the turn, Starts on O; GOOD1
 			LD R0, TURNCOUNT		;Branch if turncount is negative
 			BRn GAMEOVER			;
-
 RETRY		JSR GETMOV				;Get the next move for tictactoe; GOOD1
 			LD R0, SAVER0			;Loops if R0 is negative
 			BRn RETRY				;			
-
 			JSR GETADDRESS			;GETS THE ADDRESS FOR THE GAME			
 			JSR GAMEMEMORY			;
 			JSR DRAWB				;
-			BRnzp TICTACTOE 		;Repeat for next turn
-			;Figure out a way to repeat this move multiple times
-			
+			BRnzp TICTACTOE 		;Repeat for next turn	
 GAMEOVER	HALT					;End Program			
-			
-			;Horizontal line
 DRAWH		ST R7, SAVER7			;R7 store address
 			LD R0, CURRCOLORW		;R0 white color
 			LD R1, CORDROW			;R1 is current cord
@@ -32,18 +24,15 @@ DRAWH		ST R7, SAVER7			;R7 store address
 			LD R4, STRIDE			;128 stride
 			AND R5, R5, #0			;
 			ADD R5, R5, #1			;Counter for two rows
-
 LOOP1		STR R0, R1, #0			;write pixel
 			ADD R1, R1, #1			;increment to next pixel
 			ADD R3, R3, #-1			;decrement counter
 			BRp LOOP1				;Repeat until pixel counter is 0
-			
 			ADD R5, R5, #-1			;Decrement counter newrow
 			BRn RETURNROW			;Return the program
 			LD R3, PIXELCOUNT		;90 pixel count
 			ADD R5, R5, #15			;R5 counter #30
 			ADD R5, R5, #15			;
-			
 NEWROW		ADD R1, R1, R4			;Add #128 to row
 			ADD R5, R5, #-1			;decrement counter
 			BRp NEWROW				;LOOP
@@ -54,10 +43,6 @@ NEWROW		ADD R1, R1, R4			;Add #128 to row
 			BRnzp LOOP1				;create new row
 RETURNROW	LD R7, SAVER7			;
 			RET						;
-
-
-
-			;Vertical line
 DRAWV		ST R7, SAVER7			;
 			LD R0, CURRCOLORW		;
 			LD R1, CORDCOL			;
@@ -65,12 +50,10 @@ DRAWV		ST R7, SAVER7			;
 			LD R4, STRIDE			;
 			AND R5, R5, #0			;
 			ADD R5, R5, #1			;Counter for two rows
-			
 LOOP2		STR R0, R1, #0			;write pixel
 			ADD R1, R1, R4 			;next row
 			ADD R3, R3, #-1			;decrement pixel counter
 			BRp LOOP2				;
-
 			ADD R5, R5, #-1			;Decrement counter newrow
 			BRn RETURNCOL			;Return the program
 			LD R3, PIXELCOUNT		;Load 90 pixels
